@@ -1,0 +1,869 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PhishEye</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{
+  --bg:#F4F2ED; --surface:#FFFFFF; --sunk:#ECE9E1; --ink:#17191E; --muted:#454A52; --faint:#6B6F76;
+  --line:#DDD8CE; --line-strong:#B9B4AA;
+  --accent:#1F4FA8; --on-accent:#FFFFFF; --accent-tint:rgba(31,79,168,.10);
+  --safe-fg:#17693F; --safe-bg:#E3F1E8; --safe-line:#9ED0B1;
+  --warn-fg:#8F4505; --warn-bg:#FCEBD5; --warn-line:#E9B77A;
+  --risk-fg:#A11D1D; --risk-bg:#FBE2E0; --risk-line:#E8A39C;
+  --risk-solid:#A11D1D; --warn-solid:#B45309; --safe-solid:#17693F;
+  --bubble:#E9E9EB; --link:#0B57D0; --scrim:rgba(23,25,30,.5); --scrim-strong:rgba(23,25,30,.72);
+  --toast-bg:#17191E; --toast-fg:#FFFFFF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171B; --surface:#1F2227; --sunk:#2A2D33; --ink:#F1F2F4; --muted:#B8BDC5; --faint:#8F959E;
+    --line:#33373E; --line-strong:#4F545C;
+    --accent:#86A9F0; --on-accent:#0E1726; --accent-tint:rgba(134,169,240,.16);
+    --safe-fg:#86D6A6; --safe-bg:#16301F; --safe-line:#2E5E40;
+    --warn-fg:#F2B36B; --warn-bg:#3A2610; --warn-line:#6B4A1F;
+    --risk-fg:#F6A39B; --risk-bg:#3D1715; --risk-line:#7A2F2A;
+    --bubble:#2C2F35; --link:#8AB4F8; --scrim:rgba(0,0,0,.6); --scrim-strong:rgba(0,0,0,.78);
+    --toast-bg:#F1F2F4; --toast-fg:#17191E;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171B; --surface:#1F2227; --sunk:#2A2D33; --ink:#F1F2F4; --muted:#B8BDC5; --faint:#8F959E;
+  --line:#33373E; --line-strong:#4F545C;
+  --accent:#86A9F0; --on-accent:#0E1726; --accent-tint:rgba(134,169,240,.16);
+  --safe-fg:#86D6A6; --safe-bg:#16301F; --safe-line:#2E5E40;
+  --warn-fg:#F2B36B; --warn-bg:#3A2610; --warn-line:#6B4A1F;
+  --risk-fg:#F6A39B; --risk-bg:#3D1715; --risk-line:#7A2F2A;
+  --bubble:#2C2F35; --link:#8AB4F8; --scrim:rgba(0,0,0,.6); --scrim-strong:rgba(0,0,0,.78);
+  --toast-bg:#F1F2F4; --toast-fg:#17191E;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Atkinson Hyperlegible',Verdana,Tahoma,sans-serif;font-size:19px;line-height:1.5;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+h1,h2,h3,p{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* layout */
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;border-right:2px solid var(--line);background:var(--surface);padding:28px 18px;display:flex;flex-direction:column;gap:28px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--accent);padding:0 8px}
+.brand span{font-size:26px;font-weight:700;color:var(--ink)}
+.side-nav{display:flex;flex-direction:column;gap:6px}
+.side-nav button{display:flex;align-items:center;gap:14px;min-height:56px;padding:0 14px;border:none;border-radius:14px;background:none;font-size:19px;font-weight:700;color:var(--muted);cursor:pointer;text-align:left}
+.side-nav button[aria-current="page"]{background:var(--accent-tint);color:var(--accent)}
+.side-nav button:hover{background:var(--sunk)}
+.side-nav button[aria-current="page"]:hover{background:var(--accent-tint)}
+.side-foot{margin-top:auto;font-size:16px;color:var(--muted);padding:0 8px;line-height:1.45}
+main{min-width:0;outline:none}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 56px;display:flex;flex-direction:column;gap:22px}
+.bottom{display:none}
+@media (max-width: 880px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .wrap{padding:20px 18px 120px;gap:18px}
+  .bottom{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:2px solid var(--line);padding:6px 6px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+  .bottom button{min-height:64px;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:700;color:var(--muted);cursor:pointer}
+  .bottom button[aria-current="page"]{color:var(--accent)}
+  body{font-size:18px}
+}
+.mobile-brand{display:flex;align-items:center;gap:10px;color:var(--accent)}
+.mobile-brand span{font-size:24px;font-weight:700;color:var(--ink)}
+
+/* type */
+.h1{font-size:34px;line-height:1.2;font-weight:700}
+.h2{font-size:22px;font-weight:700;line-height:1.3}
+.lead{font-size:19px;color:var(--muted)}
+@media (max-width: 880px){.h1{font-size:28px}}
+
+/* buttons */
+.btn{min-height:60px;border-radius:16px;font-weight:700;font-size:20px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:12px;padding:0 22px;text-decoration:none}
+.btn-primary{background:var(--accent);color:var(--on-accent);border:none}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-secondary{background:var(--surface);color:var(--ink);border:2px solid var(--line-strong)}
+.btn-secondary:hover{background:var(--sunk)}
+.btn-danger{background:var(--surface);color:var(--risk-fg);border:2px solid var(--risk-line)}
+.btn-link{background:none;border:none;text-decoration:underline;color:var(--muted);min-height:48px;font-size:17px;font-weight:700;cursor:pointer;padding:0 8px}
+.btn-block{width:100%}
+.btn-hero{min-height:92px;font-size:25px;border-radius:22px;width:100%}
+.back{display:flex;align-items:center;gap:6px}
+.icon-btn{width:48px;height:48px;border:none;background:none;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:12px;padding:0}
+.icon-btn:hover{background:var(--sunk)}
+
+/* surfaces */
+.card{background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:20px}
+.status{display:flex;gap:16px;align-items:center;border-radius:20px;padding:18px 20px;border:2px solid}
+.status .dot{width:50px;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#FFFFFF}
+.status.on{background:var(--safe-bg);border-color:var(--safe-line)}
+.status.on .dot{background:var(--safe-solid)}
+.status.on .st-title{color:var(--safe-fg)}
+.status.paused{background:var(--warn-bg);border-color:var(--warn-line)}
+.status.paused .dot{background:var(--warn-solid)}
+.status.paused .st-title{color:var(--warn-fg)}
+.st-title{font-size:21px;font-weight:700}
+.alert{display:flex;gap:14px;align-items:center;text-align:left;width:100%;background:var(--risk-bg);border:2px solid var(--risk-line);border-radius:20px;padding:16px 18px;min-height:84px;cursor:pointer;color:var(--ink)}
+.alert svg{color:var(--risk-fg);flex-shrink:0}
+.alert strong{display:block;font-size:20px;color:var(--risk-fg)}
+.quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.quick button{min-height:72px;background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:0 18px;display:flex;align-items:center;gap:14px;font-size:19px;font-weight:700;cursor:pointer;text-align:left}
+.quick button:hover{border-color:var(--line-strong)}
+.quick svg{color:var(--accent);flex-shrink:0}
+.demo-link{min-height:60px;background:none;border:2px dashed var(--line-strong);border-radius:18px;font-size:18px;font-weight:700;color:var(--muted);cursor:pointer}
+
+/* segmented */
+.seg{display:flex;gap:4px;background:var(--sunk);border-radius:16px;padding:4px}
+.seg button{flex:1 1 0;min-height:54px;border:none;border-radius:12px;background:transparent;color:var(--muted);font-size:18px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* check */
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-size:20px;font-weight:700}
+textarea{width:100%;resize:vertical;min-height:170px;border:2px solid var(--line-strong);border-radius:16px;background:var(--surface);padding:16px 18px;font-size:19px;line-height:1.45}
+textarea::placeholder,input::placeholder{color:var(--faint)}
+.drop{border:3px dashed var(--line-strong);border-radius:20px;background:var(--surface);padding:26px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;transition:background .15s,border-color .15s}
+.drop.is-over{border-color:var(--accent);background:var(--accent-tint)}
+.drop .drop-icon{color:var(--accent)}
+.drop-title{font-size:20px;font-weight:700}
+.drop-sub{font-size:16px;color:var(--muted)}
+.drop-error{font-size:17px;font-weight:700;color:var(--risk-fg)}
+.touch-only{display:none}
+@media (hover:none) and (pointer:coarse){.drag-only{display:none}.touch-only{display:inline}}
+.attached{display:flex;align-items:center;gap:14px;border:2px solid var(--accent);background:var(--accent-tint);border-radius:18px;padding:12px 12px 12px 14px}
+.thumb{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--sunk);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.att-name{font-size:18px;font-weight:700;word-break:break-all}
+.att-meta{font-size:15px;color:var(--muted)}
+.examples{display:flex;flex-direction:column;gap:8px}
+.examples-label{font-size:15px;font-weight:700;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line-strong);background:var(--surface);font-size:15px;font-weight:700;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-tint)}
+
+/* scanning */
+.center{min-height:70vh;display:flex;flex-direction:column;justify-content:center;gap:28px}
+.orb{width:124px;height:124px;border-radius:62px;background:var(--accent-tint);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto}
+.steps{display:flex;flex-direction:column}
+.step{display:flex;align-items:center;gap:14px;padding:14px 0;font-size:19px;color:var(--faint)}
+.step .sd{width:32px;height:32px;border-radius:16px;border:2px solid var(--line-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--on-accent)}
+.step.cur{color:var(--ink);font-weight:700}
+.step.cur .sd{border:3px solid var(--accent)}
+.step.done{color:var(--ink)}
+.step.done .sd{background:var(--accent);border-color:var(--accent)}
+
+/* result */
+.verdict{border-radius:24px;padding:24px;border:2px solid;display:flex;flex-direction:column;gap:12px}
+.verdict.high{background:var(--risk-bg);border-color:var(--risk-line);color:var(--risk-fg)}
+.verdict.suspicious{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn-fg)}
+.verdict.safe{background:var(--safe-bg);border-color:var(--safe-line);color:var(--safe-fg)}
+.verdict-top{display:flex;align-items:center;gap:14px}
+.verdict-label{font-size:38px;font-weight:700;line-height:1.1}
+.verdict-title{font-size:23px;font-weight:700;line-height:1.35;color:var(--ink)}
+.linked{display:flex;align-items:center;gap:14px;text-align:left;width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:18px;padding:16px 18px;min-height:76px;cursor:pointer}
+.linked strong{display:block;font-size:20px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;align-items:start}
+.reason{display:flex;gap:12px;align-items:flex-start;font-size:19px}
+.reason::before{content:"";width:10px;height:10px;border-radius:5px;background:currentColor;flex-shrink:0;margin-top:11px}
+.reasons{display:flex;flex-direction:column;gap:10px}
+.reasons.high{color:var(--risk-fg)}.reasons.suspicious{color:var(--warn-fg)}.reasons.safe{color:var(--safe-fg)}
+.reasons .reason span{color:var(--ink)}
+.todo{display:flex;gap:12px;align-items:flex-start;font-size:19px}
+.num{width:34px;height:34px;border-radius:17px;background:var(--accent);color:var(--on-accent);font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.actions{display:flex;flex-direction:column;gap:10px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:17px}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{font-weight:700;text-align:right}
+
+/* timeline */
+.tl{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:16px}
+.tl-rail{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.tl-dot{width:50px;height:50px;border-radius:25px;background:var(--risk-bg);color:var(--risk-fg);display:flex;align-items:center;justify-content:center}
+.tl-line{width:3px;flex-grow:1;min-height:20px;background:var(--risk-line)}
+.tl-body{padding:4px 0 22px;display:flex;flex-direction:column;gap:4px}
+.tl-when{font-size:16px;font-weight:700;color:var(--muted)}
+.tl-title{font-size:20px;font-weight:700}
+.pill{display:inline-flex;align-self:flex-start;font-size:16px;font-weight:700;padding:5px 12px;border-radius:999px}
+.pill.high{background:var(--risk-bg);color:var(--risk-fg)}.pill.suspicious{background:var(--warn-bg);color:var(--warn-fg)}.pill.safe{background:var(--safe-bg);color:var(--safe-fg)}
+.help{background:var(--warn-bg);border:2px solid var(--warn-line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.help strong{font-size:20px;color:var(--warn-fg)}
+
+/* history */
+.hist-list{display:flex;flex-direction:column}
+.hist-row{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:18px 20px;border-top:1px solid var(--line)}
+.hist-row:first-child{border-top:none}
+.hist-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hist-label{font-size:20px;font-weight:700;line-height:1.3;word-break:break-word}
+.hist-meta{font-size:16px;color:var(--muted)}
+.hist-explain{font-size:16px;color:var(--muted);line-height:1.4}
+
+/* pin */
+.pin-wrap{max-width:360px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.pin-dots{display:flex;gap:18px}
+.pin-dots span{width:22px;height:22px;border-radius:11px;border:2px solid var(--ink)}
+.pin-dots span.filled{background:var(--ink)}
+.keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%}
+.keypad button{height:68px;border:2px solid var(--line);border-radius:16px;background:var(--surface);font-size:28px;font-weight:700;cursor:pointer}
+.keypad button:hover{border-color:var(--line-strong)}
+.keypad .blank{visibility:hidden}
+.err{font-size:18px;font-weight:700;color:var(--risk-fg)}
+
+/* admin */
+.row{display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid var(--line)}
+.row:first-child{border-top:none}
+.row-text{flex-grow:1;display:flex;flex-direction:column;gap:4px}
+.row-title{font-size:19px;font-weight:700;line-height:1.3}
+.row-sub{font-size:16px;color:var(--muted);line-height:1.4}
+.list{padding:0}
+.switch{flex-shrink:0;width:64px;height:48px;border:none;background:none;padding:0;cursor:pointer;display:flex;align-items:center}
+.switch span{width:64px;height:36px;border-radius:18px;background:var(--line-strong);display:flex;align-items:center;padding:3px;transition:background .15s}
+.switch span::after{content:"";width:30px;height:30px;border-radius:15px;background:#FFFFFF;transition:transform .15s}
+.switch[aria-pressed="true"] span{background:var(--accent)}
+.switch[aria-pressed="true"] span::after{transform:translateX(28px)}
+.locked{display:flex;gap:12px;align-items:flex-start;background:var(--sunk);border-radius:14px;padding:14px}
+.locked svg{color:var(--risk-fg);flex-shrink:0}
+
+/* messages demo */
+.phone-demo{max-width:460px;width:100%;margin:0 auto;border:2px solid var(--line);border-radius:28px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column;min-height:620px}
+.demo-bar{display:flex;align-items:center;justify-content:space-between;background:#2B2F35;color:#FFFFFF;padding:8px 10px 8px 16px;font-size:15px;font-weight:700}
+.demo-bar button{min-height:44px;padding:0 12px;border:1.5px solid #FFFFFF;border-radius:10px;background:none;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer}
+.thread-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.avatar{width:46px;height:46px;border-radius:23px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-weight:700}
+.thread{flex-grow:1;padding:20px 16px;display:flex;flex-direction:column;gap:14px}
+.ts{text-align:center;font-size:14px;color:var(--faint)}
+.bubble-wrap{position:relative;align-self:flex-start;max-width:320px;padding-bottom:16px;padding-right:14px}
+.bubble{background:var(--bubble);border-radius:20px;padding:14px 16px;font-size:18px;line-height:1.45}
+.bubble .lnk{display:inline;background:none;border:none;padding:0;font-size:18px;color:var(--link);text-decoration:underline;cursor:pointer;word-break:break-all}
+.pe-badge{position:absolute;right:0;bottom:0;width:46px;height:46px;border-radius:23px;border:3px solid var(--surface);color:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.pe-badge.high{background:var(--risk-solid)}.pe-badge.warn{background:var(--warn-solid)}.pe-badge.safe{background:var(--safe-solid)}
+.sys{align-self:center;font-size:16px;color:var(--muted);background:var(--sunk);border-radius:12px;padding:10px 14px}
+.compose{border-top:1px solid var(--line);padding:10px 12px 14px;display:flex;align-items:center;gap:10px}
+.compose-field{flex-grow:1;position:relative;display:flex;align-items:center}
+.compose input{width:100%;min-height:54px;border:1.5px solid var(--line-strong);border-radius:27px;padding:0 58px 0 18px;font-size:18px;background:var(--surface)}
+.compose .pe-badge{position:absolute;right:5px;top:50%;bottom:auto;transform:translateY(-50%);width:44px;height:44px;border:none;box-shadow:none}
+.send{width:50px;height:50px;border-radius:25px;border:none;background:var(--link);color:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.demo-note{font-size:16px;color:var(--muted);text-align:center;max-width:460px;margin:0 auto}
+
+/* theme + plans */
+.side-theme{margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 8px 0;border-top:2px solid var(--line)}
+.side-theme .lbl{flex-grow:1;font-size:18px;font-weight:700}
+.mobile-top{display:none;align-items:center;justify-content:space-between;gap:12px}
+@media (max-width: 880px){.mobile-top{display:flex}}
+.theme-icon{width:52px;height:52px;border:2px solid var(--line-strong);border-radius:14px;background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.plan-card{display:flex;align-items:center;gap:14px;background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:16px 18px}
+.plan-card .grow{flex-grow:1}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;align-items:stretch}
+.plan{background:var(--surface);border:2px solid var(--line);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.plan.best{border:3px solid var(--accent)}
+.plan-name{font-size:26px;font-weight:700}
+.price{font-size:44px;font-weight:700;line-height:1}
+.price small{font-size:19px;font-weight:400;color:var(--muted)}
+.feat{display:flex;gap:12px;align-items:flex-start;font-size:18px}
+.feat svg{flex-shrink:0;margin-top:3px;color:var(--safe-fg)}
+.feat.no{color:var(--muted)}
+.feat.no svg{color:var(--faint)}
+.plan .btn{margin-top:auto}
+.badge-best{align-self:flex-start;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:700;padding:4px 12px;border-radius:999px}
+.fine{font-size:16px;color:var(--muted);text-align:center}
+.premium-lock{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+
+/* overlays */
+#overlay:empty{display:none}
+.scrim{position:fixed;inset:0;z-index:20;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center}
+.scrim.center-it{align-items:center;padding:18px;background:var(--scrim-strong)}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:24px 22px calc(26px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+@media (min-width: 881px){.scrim{align-items:center;padding:24px}.sheet{border-radius:24px;padding-bottom:26px}}
+.sheet-title{font-size:25px;font-weight:700;line-height:1.25}
+.popup{background:var(--surface);border-radius:24px;overflow:hidden;width:100%;max-width:480px}
+.popup-head{background:var(--risk-solid);color:#FFFFFF;padding:26px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.popup-head .big{font-size:34px;font-weight:700}
+.popup-head .sub{font-size:21px;font-weight:700}
+.popup-body{padding:22px;display:flex;flex-direction:column;gap:12px}
+.note-warn{font-size:17px;background:var(--warn-bg);border-radius:12px;padding:12px 14px}
+.ob{background:var(--surface);border-radius:28px;width:100%;max-width:520px;padding:22px 26px 28px;display:flex;flex-direction:column;gap:22px;text-align:center}
+.ob-art{width:150px;height:150px;border-radius:75px;background:var(--accent-tint);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto}
+.ob-dots{display:flex;gap:10px;justify-content:center}
+.ob-dots span{height:10px;width:10px;border-radius:5px;background:var(--line-strong)}
+.ob-dots span.on{width:28px;background:var(--accent)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--toast-bg);color:var(--toast-fg);border-radius:16px;padding:16px 20px;font-size:18px;max-width:min(520px,calc(100% - 32px));width:max-content}
+#toast:empty{display:none}
+@media (max-width: 880px){#toast{bottom:calc(100px + env(safe-area-inset-bottom,0px))}}
+@media (prefers-reduced-motion: no-preference){
+  .sheet{animation:up .22s ease-out}
+  .popup{animation:pop .18s ease-out}
+  @keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="PhishEye">
+    <div class="brand" id="brand-slot"></div>
+    <nav class="side-nav" aria-label="Main" id="side-nav"></nav>
+    <div class="side-theme" id="side-theme"></div>
+  </aside>
+  <main id="view" tabindex="-1"></main>
+  <nav class="bottom" aria-label="Main" id="bottom-nav"></nav>
+</div>
+<div id="overlay"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="file" class="sr-only" accept="image/*,.pdf,.eml,.txt" tabindex="-1" aria-hidden="true">
+
+<script>
+try { var th = localStorage.getItem("phisheye-theme"); if (th === "dark" || th === "light") document.documentElement.setAttribute("data-theme", th); } catch(e){}
+(function(){
+  /* ---------- icons ---------- */
+  function svg(p, size, sw){ return '<svg width="'+(size||24)+'" height="'+(size||24)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>'; }
+  var P = {
+    shieldEye:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M7.5 12s1.8-3 4.5-3 4.5 3 4.5 3-1.8 3-4.5 3-4.5-3-4.5-3z"/><circle cx="12" cy="12" r="1.1"/>',
+    shield:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/>',
+    shieldBang:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M12 8v5"/><path d="M12 16v.01"/>',
+    check:'<path d="M6 12.5l4 4L18 8"/>',
+    pause:'<path d="M9 6v12M15 6v12"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+    tri:'<path d="M12 4l9 16H3L12 4z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/>',
+    oct:'<path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7L8.5 3z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/>',
+    okCircle:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>',
+    msg:'<path d="M4 5h16v11H9l-5 4V5z"/>',
+    qr:'<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>',
+    phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/>',
+    link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    home:'<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4v-9z"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    back:'<path d="M15 5l-7 7 7 7"/>',
+    upload:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+    file:'<path d="M14 3H6v18h12V7l-4-4z"/><path d="M14 3v4h4"/>',
+    up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+    moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3z"/>',
+    x:'<path d="M7 7l10 10M17 7L7 17"/>',
+    chat:'<path d="M3 5h13v9H8l-5 4V5z"/><circle cx="18" cy="16" r="4"/><path d="M16.5 16l1 1 2-2"/>'
+  };
+
+  /* ---------- data ---------- */
+  var LEVEL = { safe:'Safe', suspicious:'Suspicious', high:'High Risk' };
+  var SAMPLES = {
+    high:{ chip:'Bank text', type:'Text message', level:'high', connected:true,
+      input:'NORTHBANK: Unusual sign-in detected. Your account will be locked in 2 hours. Verify now: northbank-secure.co/login',
+      title:'This is a fake bank message',
+      reasons:['The link is not Northbank\u2019s real website.','The fake website was made 3 days ago.','It tries to rush you: \u201clocked in 2 hours.\u201d'],
+      advice:['Don\u2019t tap the link. Don\u2019t reply.','Worried? Call Northbank using the number on the back of your card.'],
+      details:[['Website age','3 days'],['Scam lists','Listed on 2 of 5'],['Pretends to be','northbank.com']] },
+    suspicious:{ chip:'Parcel text', type:'Text message', level:'suspicious', connected:false,
+      input:'Your parcel is on hold. Pay a $1.99 redelivery fee within 24h: parcel-track-help.net',
+      title:'Be careful. This may be a delivery scam.',
+      reasons:['Real delivery companies rarely ask for small fees by text.','The website is new and not from a known company.'],
+      advice:['Don\u2019t pay through this link.','Check your parcel on the delivery company\u2019s official app.'],
+      details:[['Website age','2 months'],['Scam lists','Not listed'],['Asks for payment','Yes, $1.99']] },
+    safe:{ chip:'Link from a friend', type:'Link', level:'safe', connected:false,
+      input:'https://en.wikipedia.org/wiki/Phishing',
+      title:'This link looks safe',
+      reasons:['Wikipedia is a well-known website.','It doesn\u2019t ask for passwords, codes or money.'],
+      advice:['You can open it.','Never type a password on a page you reached from a message.'],
+      details:[['Website age','20+ years'],['Scam lists','Not listed'],['Certificate','Valid']] },
+    phone:{ type:'Phone number', level:'high', connected:true, input:'+1 (213) 555-0147',
+      title:'This number is used by scammers',
+      reasons:['Other people reported this number for pretending to be a bank.','It is linked to a fake bank text you received.'],
+      advice:['Don\u2019t answer or call back.','Never give a code or password on the phone.'],
+      details:[['Reports','Reported as a scam'],['Pretends to be','Northbank'],['Linked to','northbank-secure.co']] },
+    qr:{ type:'QR code', level:'high', connected:false, input:'QR sticker on parking meter \u2192 pay-parking-now.co/pay',
+      title:'This QR code opens a fake payment page',
+      reasons:['It is not the city\u2019s parking website.','It asks for your card number straight away.'],
+      advice:['Don\u2019t enter your card details.','Pay with the official parking app or at the meter.'],
+      details:[['Website age','9 days'],['Scam lists','Listed on 1 of 5'],['Asks for','Card number']] }
+  };
+  var TYPES = [
+    { id:'message', label:'Message', field:'Paste the message, link or phone number', ph:'For example: \u201cNORTHBANK: Your account will be locked in 2 hours. Verify now: northbank-secure.co/login\u201d', ex:'high' },
+    { id:'link', label:'Link', field:'Paste the link here', ph:'For example: parcel-track-help.net', ex:'suspicious' },
+    { id:'phone', label:'Phone', field:'Type the phone number', ph:'For example: +1 (213) 555-0147', ex:'phone' }
+  ];
+  var SEED = [
+    { label:'Call from +1 (213) 555-0147', sub:'Phone call', when:'Yesterday, 6:40 PM', level:'suspicious', explain:'We couldn\u2019t confirm who this caller was. Real companies rarely call from an unfamiliar number to ask about your account.' },
+    { label:'weather.gov', sub:'Link', when:'Monday', level:'safe', explain:'A well-known U.S. government website. It doesn\u2019t ask for passwords, codes or money.' },
+    { label:'\u201cYou won a $500 gift card\u201d', sub:'Email', when:'Sep 20', level:'high', explain:'It offers a surprise prize and pushes you to act fast \u2014 a common trick scammers use to get your details.' }
+  ];
+  var TOGGLES = [
+    { id:'bubble', label:'Show the PhishEye button in other apps', sub:'The small icon next to messages. High-risk warnings always show.' },
+    { id:'warnLinks', label:'Warn before opening risky links', sub:'For suspicious (orange) links.' },
+    { id:'openAnyway', label:'Allow \u201cOpen anyway\u201d on blocked websites', sub:'Off is safest.' },
+    { id:'notify', label:'Text my trusted contact about high-risk scams', sub:'They get a short alert, never the message itself.' }
+  ];
+
+  /* ---------- state ---------- */
+  var STORE = 'phisheye-web-v1';
+  function load(){ try { var v = localStorage.getItem(STORE); return v ? JSON.parse(v) : null; } catch(e){ return null; } }
+  var saved = load() || {};
+  var S = {
+    route:'home', type:'message', input:'', sampleKey:null, attachment:null, dropError:'',
+    result:null, scanStep:0, showDetails:false, sharedHelp:false,
+    history: saved.history || SEED.slice(), hasAlert: saved.hasAlert !== undefined ? saved.hasAlert : true,
+    protection: saved.protection || 'on',
+    admin: saved.admin || { bubble:true, warnLinks:true, openAnyway:false, notify:true },
+    retention: saved.retention || 30, onboarded: !!saved.onboarded, plan: saved.plan || 'free',
+    adminUnlocked:false, pin:'', pinError:false,
+    draft:'Here is the code: 482913', scamDeleted:false, sheet:null, popup:false, ob:0
+  };
+  function save(){ try { localStorage.setItem(STORE, JSON.stringify({ history:S.history, hasAlert:S.hasAlert, protection:S.protection, admin:S.admin, retention:S.retention, onboarded:S.onboarded, plan:S.plan })); } catch(e){} }
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function $(id){ return document.getElementById(id); }
+  var timers = [], toastT = null;
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+
+  function toast(msg){ var t = $('toast'); t.textContent = msg; if (toastT) clearTimeout(toastT); toastT = setTimeout(function(){ t.textContent=''; }, 3000); }
+
+  function analyze(txt, type){
+    var t = txt.toLowerCase();
+    var link = /(https?:\/\/|www\.)/.test(t) || /\b[a-z0-9-]+\.(com|net|org|co|info|xyz|app|io|link|top)\b/.test(t);
+    var pressure = ['urgent','locked','suspend','within 24','immediately','act now','final notice','expire'].some(function(w){ return t.indexOf(w)>=0; });
+    var asks = ['otp','code','password','pin','card','pay','fee','gift','verify','login','sign in'].some(function(w){ return t.indexOf(w)>=0; });
+    var reasons = [];
+    if (pressure) reasons.push('It tries to rush you or scare you.');
+    if (asks) reasons.push('It asks for money, a password or a code.');
+    if (link) reasons.push('It has a link we don\u2019t trust.');
+    var score = (pressure?1:0)+(asks?1:0)+(link?1:0);
+    var level = score>=2 ? 'high' : (score===1 ? 'suspicious' : 'safe');
+    if (!reasons.length) reasons = ['We didn\u2019t find signs of a scam.','It doesn\u2019t ask for money, passwords or codes.'];
+    var titles = { high:'This looks like a scam', suspicious:'Be careful with this', safe:'This looks safe' };
+    var advice = {
+      high:['Don\u2019t tap any links. Don\u2019t reply.','Call the company using a number you already know.'],
+      suspicious:['Don\u2019t pay or share details yet.','Ask your trusted contact if you\u2019re not sure.'],
+      safe:['It looks fine.','If something asks for a password or money later, check again.']
+    };
+    return { type:{message:'Text message',link:'Link',phone:'Phone number'}[type]||'Message', level:level, connected:false, input:txt,
+      title:titles[level], reasons:reasons, advice:advice[level],
+      details:[['Link found',link?'Yes':'No'],['Rushing words',pressure?'Yes':'No'],['Asks for money or codes',asks?'Yes':'No']] };
+  }
+
+  /* ---------- routing ---------- */
+  var ROUTES = ['home','check','qr','checking','result','connected','history','admin','demo','plans'];
+  function go(r){ if (location.hash === '#/'+r) { navigate(); } else { location.hash = '#/'+r; } }
+  function navigate(){
+    var r = (location.hash || '').replace(/^#\/?/, '') || 'home';
+    if (ROUTES.indexOf(r) < 0) r = 'home';
+    if (r === 'checking' && S.route !== 'checking') r = 'check';
+    if (r !== 'checking') clearTimers();
+    S.route = r; S.sheet = null; S.popup = false; S.showDetails = false; S.sharedHelp = false;
+    render(true);
+  }
+
+  /* ---------- nav ---------- */
+  function navHtml(isSide){
+    var active = S.route === 'checking' || S.route === 'result' || S.route === 'qr' ? 'check' : (S.route === 'connected' ? 'home' : S.route);
+    var items = isSide
+      ? [['home','Home',P.home],['check','Check something',P.search],['history','History',P.clock],['demo','Messages demo',P.chat],['plans','Plans',P.star],['admin','Admin',P.lock]]
+      : [['home','Home',P.home],['check','Check',P.search],['history','History',P.clock],['admin','Admin',P.lock]];
+    return items.map(function(it){
+      return '<button type="button" data-act="nav" data-to="'+it[0]+'"'+(active===it[0]?' aria-current="page"':'')+'>'+svg(it[2], isSide?26:28)+esc(it[1])+'</button>';
+    }).join('');
+  }
+
+  /* ---------- views ---------- */
+  function backBtn(label, to){ return '<div class="back"><button type="button" class="icon-btn" aria-label="'+esc(label)+'" data-act="nav" data-to="'+to+'">'+svg(P.back,28,2.2)+'</button>'; }
+  function isDark(){ return document.documentElement.getAttribute('data-theme') === 'dark'; }
+  function mobileBrand(){ var d = isDark(); return '<div class="mobile-top"><div class="mobile-brand">'+svg(P.shieldEye,32,1.8)+'<span>PhishEye</span></div><button type="button" class="theme-icon" data-act="theme" aria-pressed="'+d+'" aria-label="Dark mode">'+svg(d?P.sun:P.moon,26)+'</button></div>'; }
+  function sideTheme(){ var d = isDark(); return '<span style="color:var(--muted);display:flex">'+svg(d?P.moon:P.sun,24)+'</span><span class="lbl" id="lbl-theme">Dark mode</span><button type="button" class="switch" data-act="theme" aria-pressed="'+d+'" aria-labelledby="lbl-theme"><span></span></button>'; }
+
+  function vHome(){
+    var on = S.protection === 'on';
+    return '<div class="wrap">'+mobileBrand()+
+      '<h1 class="h1" tabindex="-1" data-focus>Is something bothering you?</h1>'+
+      '<button type="button" class="btn btn-primary btn-hero" data-act="startType" data-type="message">'+svg(P.search,32,2.2)+'Check something</button>'+
+      '<div class="status '+(on?'on':'paused')+'"><div class="dot">'+svg(on?P.check:P.pause,26,2.6)+'</div><div><div class="st-title">'+(on?'You\u2019re protected':'Paused by admin')+'</div><div>'+(on?'PhishEye is watching your messages and links.':'Dangerous (high-risk) threats are still blocked.')+'</div></div></div>'+
+      (S.hasAlert && S.plan==='premium' ? '<button type="button" class="alert" data-act="nav" data-to="connected">'+svg(P.tri,34)+'<span><strong>Warning: possible scam</strong>A call, a text and a website may be the same scam. Select to see.</span></button>' : '')+
+      (S.plan==='free' ? '<button type="button" class="plan-card" style="width:100%;text-align:left;cursor:pointer;color:var(--ink)" data-act="nav" data-to="plans"><span style="color:var(--accent);display:flex">'+svg(P.star,30)+'</span><span class="grow"><span style="display:block;font-weight:700;font-size:20px">You\u2019re on the Free plan</span><span style="display:block;color:var(--muted)">Premium adds live scam checks and family alerts.</span><span style="display:block;font-weight:700;color:var(--accent);margin-top:6px;text-decoration:underline">See plans</span></span></button>'
+        : '<div class="plan-card"><span style="color:var(--accent);display:flex">'+svg(P.star,30)+'</span><div class="grow"><div style="font-weight:700;font-size:20px">Premium plan</div><div style="color:var(--muted)">Full protection is on.</div></div></div>')+
+      '<button type="button" class="demo-link" data-act="nav" data-to="demo">Demo: see PhishEye inside Messages</button>'+
+    '</div>';
+  }
+
+  function fmtSize(n){ return n < 1024*1024 ? Math.max(1, Math.round(n/1024))+' KB' : (n/1024/1024).toFixed(1)+' MB'; }
+
+  function vCheck(){
+    var t = TYPES.filter(function(x){ return x.id===S.type; })[0] || TYPES[0];
+    var att = S.attachment;
+    var attHtml = att
+      ? '<div class="attached">'+(att.url ? '<img class="thumb" src="'+att.url+'" alt="">' : '<div class="thumb">'+svg(P.file,30)+'</div>')+
+          '<div style="flex-grow:1;min-width:0"><div class="att-name">'+esc(att.name)+'</div><div class="att-meta">'+esc(att.meta)+'</div></div>'+
+          '<button type="button" class="btn-link" data-act="removeAttach">Remove</button></div>'
+      : '<div id="drop" class="drop">'+
+          '<div class="drop-icon">'+svg(P.upload,36)+'</div>'+
+          '<p class="drop-title"><span class="drag-only">Drag a screenshot or file here</span><span class="touch-only">Add a screenshot or file</span></p>'+
+          '<p class="drop-sub">Photos, PDFs, or saved emails. Up to 10 MB.</p>'+
+          '<button type="button" class="btn btn-secondary" data-act="chooseFile">Choose a file</button>'+
+          (S.dropError ? '<p class="drop-error" role="alert">'+esc(S.dropError)+'</p>' : '')+
+        '</div>';
+    return '<div class="wrap">'+backBtn('Back to home','home')+'<h1 class="h1" tabindex="-1" data-focus>Check something</h1></div>'+
+      '<div class="field"><label for="pe-input">'+esc(t.field)+'</label><textarea id="pe-input" rows="5" placeholder="'+esc(t.ph)+'">'+esc(S.input)+'</textarea></div>'+
+      attHtml+
+      '<div class="examples"><div class="examples-label">Or try an example</div><div class="chips">'+
+        ['high','suspicious','safe'].map(function(k){ return '<button type="button" class="chip" data-act="example" data-key="'+k+'" aria-pressed="'+(S.sampleKey===k)+'">'+SAMPLES[k].chip+'</button>'; }).join('')+
+      '</div></div>'+
+      '<button type="button" class="btn btn-primary btn-block" data-act="check">Check now</button>'+
+    '</div>';
+  }
+
+  function vQr(){
+    return '<div class="wrap">'+backBtn('Back to home','home')+'<h1 class="h1" tabindex="-1" data-focus>Scan a QR code</h1></div>'+
+      '<div class="card" style="background:#17191E;border-color:#17191E;color:#FFFFFF;display:flex;flex-direction:column;align-items:center;gap:20px;padding:32px 20px">'+
+        '<div style="width:min(280px,100%);aspect-ratio:1;border:4px solid #FFFFFF;border-radius:28px;background:#262930;display:flex;align-items:center;justify-content:center;color:#9AA0AA">'+svg(P.qr,72,1.4)+'</div>'+
+        '<p style="font-size:20px;text-align:center;max-width:320px">Point your camera at the code. We check it before you open it.</p>'+
+      '</div>'+
+      '<button type="button" class="btn btn-primary btn-block" data-act="simulateScan">Simulate a scan</button>'+
+    '</div>';
+  }
+
+  function vChecking(){
+    var labels = ['Checking scam lists','Looking at the website','Reading the message'];
+    return '<div class="wrap"><div class="center">'+
+      '<div style="text-align:center;display:flex;flex-direction:column;gap:16px"><div class="orb">'+svg(P.shieldEye,62,1.6)+'</div><h1 class="h1" tabindex="-1" data-focus>Checking\u2026</h1><p class="lead">This takes a few seconds.</p></div>'+
+      '<div class="card steps" aria-live="polite">'+labels.map(function(l,i){ var c = i<S.scanStep?'done':(i===S.scanStep?'cur':''); return '<div class="step '+c+'"><span class="sd">'+(i<S.scanStep?svg(P.check,16,3):'')+'</span>'+l+'</div>'; }).join('')+'</div>'+
+    '</div></div>';
+  }
+
+  function vResult(){
+    var r = S.result || SAMPLES.high;
+    var icon = r.level==='high'?P.oct:(r.level==='suspicious'?P.tri:P.okCircle);
+    return '<div class="wrap">'+backBtn('Back to home','home')+'<span class="h2">Result</span></div>'+
+      '<div class="verdict '+r.level+'"><div class="verdict-top">'+svg(icon,46)+'<h1 class="verdict-label" tabindex="-1" data-focus>'+LEVEL[r.level]+'</h1></div><p class="verdict-title">'+esc(r.title)+'</p></div>'+
+      (r.connected ? (S.plan==='premium' ? '<button type="button" class="linked" data-act="nav" data-to="connected">'+svg(P.link,30)+'<span><strong>Part of a bigger scam</strong>Linked to 2 earlier events. Select to see.</span></button>'
+        : '<button type="button" class="linked" data-act="nav" data-to="plans">'+svg(P.star,30)+'<span><strong>Is this part of a bigger scam?</strong>Premium connects texts, calls and websites. See plans.</span></button>') : '')+
+      '<div class="two">'+
+        '<section style="display:flex;flex-direction:column;gap:12px"><h2 class="h2">Why</h2><div class="reasons '+r.level+'">'+r.reasons.map(function(x){ return '<div class="reason"><span>'+esc(x)+'</span></div>'; }).join('')+'</div></section>'+
+        '<section class="card" style="display:flex;flex-direction:column;gap:14px"><h2 class="h2">What to do</h2>'+r.advice.map(function(x,i){ return '<div class="todo"><span class="num">'+(i+1)+'</span><span style="padding-top:3px">'+esc(x)+'</span></div>'; }).join('')+'</section>'+
+      '</div>'+
+      '<div class="actions">'+
+        (r.level==='safe' ? '<button type="button" class="btn btn-primary btn-block" data-act="nav" data-to="home">Done</button>' : '<button type="button" class="btn btn-primary btn-block" data-act="report">Block and report</button>')+
+        '<button type="button" class="btn btn-secondary btn-block" data-act="callFamily">Call my trusted contact</button>'+
+        '<button type="button" class="btn-link" data-act="toggleDetails" aria-expanded="'+S.showDetails+'">'+(S.showDetails?'Hide details':'Show more details')+'</button>'+
+        (S.showDetails ? '<div class="card" style="padding:6px 18px"><p style="font-size:16px;color:var(--muted);padding:12px 0;word-break:break-word">You checked: '+esc(r.input)+'</p>'+r.details.map(function(d){ return '<div class="kv"><span>'+esc(d[0])+'</span><span>'+esc(d[1])+'</span></div>'; }).join('')+'</div>' : '')+
+      '</div>'+
+    '</div>';
+  }
+
+  function vConnected(){
+    if (S.plan !== 'premium') return '<div class="wrap">'+backBtn('Back to home','home')+'</div><div class="card premium-lock"><span style="color:var(--accent)">'+svg(P.star,40)+'</span><h1 class="h1" tabindex="-1" data-focus>Linked-scam alerts are part of Premium</h1><p>Premium notices when a text, a call and a website belong to the same scam, and warns you.</p><button type="button" class="btn btn-primary btn-block" data-act="nav" data-to="plans">See plans</button></div></div>';
+    var tl = [[P.phone,'Yesterday, 6:40 PM','Phone call','Someone said they were Northbank and asked for a code.'],[P.msg,'Today, 9:12 AM','Text message','Said your account would be locked.'],[P.globe,'Today, 9:12 AM','Fake website','A copy of Northbank\u2019s sign-in page.']];
+    return '<div class="wrap">'+backBtn('Back to home','home')+'<span class="pill high">High Risk</span></div>'+
+      '<h1 class="h1" tabindex="-1" data-focus>These 3 things are one scam</h1>'+
+      '<div class="tl">'+tl.map(function(e,i){ return '<div class="tl-item"><div class="tl-rail"><div class="tl-dot">'+svg(e[0],24)+'</div>'+(i<2?'<div class="tl-line"></div>':'')+'</div><div class="tl-body"><div class="tl-when">'+e[1]+'</div><div class="tl-title">'+e[2]+'</div><div>'+e[3]+'</div></div></div>'; }).join('')+'</div>'+
+      '<div class="card"><h2 class="h2" style="margin-bottom:8px">Remember</h2><p>Your bank will never ask for a code on the phone. Never share it.</p></div>'+
+      (S.sharedHelp ? '<div class="help"><strong>If you already shared a code</strong><p>1. Call Northbank now. Use the number on the back of your card.</p><p>2. Tell your trusted contact.</p><p>3. Watch your account for payments you don\u2019t know.</p></div>' : '')+
+      '<div class="actions"><button type="button" class="btn btn-primary btn-block" data-act="report">Block and report all</button><button type="button" class="btn btn-secondary btn-block" data-act="toggleShared" aria-expanded="'+S.sharedHelp+'">I already shared a code</button></div>'+
+    '</div>';
+  }
+
+  function vHistory(){
+    return '<div class="wrap">'+mobileBrand()+'<h1 class="h1" tabindex="-1" data-focus>History</h1><p class="lead">Deleted automatically after '+S.retention+' days.</p>'+
+      (S.history.length ? '<div class="card list hist-list">'+S.history.map(function(h){ return '<div class="hist-row"><div class="hist-top"><span class="pill '+h.level+'">'+LEVEL[h.level]+'</span><span class="hist-label">'+esc(h.label)+'</span></div><div class="hist-meta">'+esc(h.sub)+', '+esc(h.when)+'</div>'+(h.explain ? '<div class="hist-explain">'+esc(h.explain)+'</div>' : '')+'</div>'; }).join('')+'</div>'
+        : '<div class="card" style="text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;padding:32px 20px"><p>Nothing checked yet.</p><button type="button" class="btn btn-primary" data-act="startType" data-type="message">Check something</button></div>')+
+    '</div>';
+  }
+
+  function vPin(){
+    var keys = ['1','2','3','4','5','6','7','8','9','','0','del'];
+    return '<div class="wrap">'+mobileBrand()+'<div class="pin-wrap">'+
+      '<div class="orb" style="width:80px;height:80px">'+svg(P.lock,38)+'</div>'+
+      '<h1 class="h1" tabindex="-1" data-focus>Admin only</h1><p class="lead">Enter the 4-digit PIN.<br>(Demo PIN: 1234)</p>'+
+      '<div class="pin-dots" role="img" aria-label="'+S.pin.length+' of 4 digits entered">'+[0,1,2,3].map(function(i){ return '<span'+(i<S.pin.length?' class="filled"':'')+'></span>'; }).join('')+'</div>'+
+      (S.pinError ? '<p class="err" role="alert">That PIN isn\u2019t right. Try again.</p>' : '')+
+      '<div class="keypad">'+keys.map(function(k){ return k==='' ? '<button type="button" class="blank" tabindex="-1" aria-hidden="true"></button>' : '<button type="button" data-act="key" data-k="'+k+'"'+(k==='del'?' aria-label="Delete"':'')+'>'+(k==='del'?'\u232B':k)+'</button>'; }).join('')+'</div>'+
+    '</div></div>';
+  }
+
+  function vAdmin(){
+    if (!S.adminUnlocked) return vPin();
+    return '<div class="wrap">'+mobileBrand()+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h1 class="h1" tabindex="-1" data-focus>Admin settings</h1><button type="button" class="btn btn-secondary" style="min-height:52px;font-size:18px" data-act="lock">Lock</button></div>'+
+      '<div class="card" style="display:flex;flex-direction:column;gap:14px"><h2 class="h2">Protection</h2>'+
+        '<div class="seg" role="group" aria-label="Protection">'+[['on','On'],['paused','Paused']].map(function(o){ return '<button type="button" data-act="prot" data-v="'+o[0]+'" aria-pressed="'+(S.protection===o[0])+'">'+o[1]+'</button>'; }).join('')+'</div>'+
+        '<div class="locked">'+svg(P.lock,24)+'<div><div style="font-weight:700">High-risk pop-ups: always on</div><div style="font-size:17px;color:var(--muted)">Even when paused, PhishEye still blocks dangerous threats, like an antivirus.</div></div></div>'+
+      '</div>'+
+      '<div class="card list">'+TOGGLES.map(function(t){ var on = S.admin[t.id]===true; return '<div class="row"><div class="row-text"><div class="row-title" id="lbl-'+t.id+'">'+esc(t.label)+'</div><div class="row-sub">'+esc(t.sub)+'</div></div><button type="button" class="switch" data-act="toggle" data-id="'+t.id+'" aria-pressed="'+on+'" aria-labelledby="lbl-'+t.id+'"><span></span></button></div>'; }).join('')+'</div>'+
+      '<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex-grow:1"><div style="font-weight:700">Plan</div><div style="color:var(--muted);font-size:17px">'+(S.plan==='premium'?'Premium, $10 a month':'Free')+'</div></div><button type="button" class="btn btn-secondary" style="min-height:52px;font-size:18px" data-act="nav" data-to="plans">Change</button></div>'+
+      '<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex-grow:1"><div style="font-weight:700">Trusted contact'+(S.plan==='premium'?'':' (Premium)')+'</div><div style="color:var(--muted);font-size:17px">[Name], [Phone number]</div></div><button type="button" class="btn btn-secondary" style="min-height:52px;font-size:18px" data-act="demoToast" data-msg="Editing the trusted contact (demo).">Edit</button></div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px"><h2 class="h2">Delete history after</h2><div class="seg" role="group" aria-label="Delete history after">'+[7,30,90].map(function(d){ return '<button type="button" data-act="retention" data-d="'+d+'" aria-pressed="'+(S.retention===d)+'">'+d+' days</button>'; }).join('')+'</div></div>'+
+      '<button type="button" class="btn btn-danger btn-block" data-act="deleteAll">Delete all history now</button>'+
+      '<button type="button" class="btn-link" data-act="demoToast" data-msg="Changing the PIN (demo).">Change admin PIN</button>'+
+    '</div>';
+  }
+
+  function draftRisky(){ return /\d{4,}/.test(S.draft) || /code|password|pin/i.test(S.draft); }
+  function draftBadge(){
+    if (!(S.draft.trim() && S.protection==='on' && S.admin.bubble!==false)) return '';
+    var r = draftRisky();
+    return '<button type="button" class="pe-badge '+(r?'warn':'safe')+'" data-act="openDraft" aria-label="'+(r?'PhishEye: warning about your message. Select for details':'PhishEye: your message looks fine')+'">'+svg(P.shield,22,2.4)+'</button>';
+  }
+  function vDemo(){
+    return '<div class="wrap"><h1 class="h1" tabindex="-1" data-focus>Messages demo</h1>'+
+      '<p class="demo-note">This shows how PhishEye appears inside your Messages app. Select the red button, the link, or the button in the typing box.</p>'+
+      '<div class="phone-demo">'+
+        '<div class="demo-bar"><span>Demo: your Messages app</span><button type="button" data-act="nav" data-to="home">Exit demo</button></div>'+
+        '<div class="thread-head"><div class="avatar">N</div><div style="font-size:20px;font-weight:700">NORTHBANK</div></div>'+
+        '<div class="thread"><div class="ts">Today 9:12 AM</div>'+
+          (S.scamDeleted ? '<div class="sys">Message deleted. Sender blocked.</div>' :
+          '<div class="bubble-wrap"><div class="bubble">NORTHBANK: Unusual sign-in detected. Your account will be locked in 2 hours. Verify now: <button type="button" class="lnk" data-act="openLink">northbank-secure.co/login</button></div>'+
+          '<button type="button" class="pe-badge high" data-act="openScam" aria-label="PhishEye: High risk. Select for details">'+svg(P.shieldBang,22,2.4)+'</button></div>')+
+        '</div>'+
+        '<div class="compose"><div class="compose-field" id="compose-field"><label for="pe-draft" class="sr-only">Your message</label><input id="pe-draft" type="text" placeholder="Text message" value="'+esc(S.draft)+'"><span id="draft-badge">'+draftBadge()+'</span></div>'+
+          '<button type="button" class="send" data-act="send" aria-label="Send">'+svg(P.up,22,2.4)+'</button></div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function feat(on, text){ return '<div class="feat'+(on?'':' no')+'">'+svg(on?P.check:P.x,22,2.6)+'<span>'+(on?'':'<span class="sr-only">Not included: </span>')+text+'</span></div>'; }
+  function vPlans(){
+    var prem = S.plan === 'premium';
+    return '<div class="wrap" style="max-width:920px">'+mobileBrand()+
+      '<h1 class="h1" tabindex="-1" data-focus>Choose your plan</h1><p class="lead">Dangerous websites are always blocked, on every plan.</p>'+
+      '<div class="plans">'+
+        '<section class="plan" aria-labelledby="pl-free"><h2 class="plan-name" id="pl-free">Free</h2><div class="price">$0 <small>forever</small></div><p style="color:var(--muted)">Checks happen only on your phone. Nothing is sent anywhere.</p>'+
+          feat(true,'Check messages you paste in')+feat(true,'PhishEye button next to messages')+feat(true,'Stop! pop-up for known dangerous websites')+feat(true,'Admin PIN for a family member')+
+          feat(false,'Live check against the latest scam lists')+feat(false,'Website, link and fake-shop checks')+feat(false,'Screenshot and QR code reading')+feat(false,'Linked-scam alerts')+feat(false,'Alerts to your trusted contact')+
+          (prem ? '<button type="button" class="btn btn-secondary btn-block" data-act="setFree">Switch to Free</button>' : '<button type="button" class="btn btn-secondary btn-block" disabled style="opacity:.6;cursor:default">Your current plan</button>')+
+        '</section>'+
+        '<section class="plan best" aria-labelledby="pl-prem"><span class="badge-best">Full protection</span><h2 class="plan-name" id="pl-prem">Premium</h2><div class="price">$10 <small>a month</small></div><p style="color:var(--muted)">Everything in Free, plus live checks that use PhishEye\u2019s online scam database.</p>'+
+          feat(true,'Everything in Free')+feat(true,'Live check against the latest scam lists')+feat(true,'Website, link and fake-shop checks')+feat(true,'Screenshot and QR code reading')+feat(true,'Linked-scam alerts')+feat(true,'Alerts to your trusted contact')+
+          (prem ? '<button type="button" class="btn btn-secondary btn-block" disabled style="opacity:.6;cursor:default">Your current plan</button>' : '<button type="button" class="btn btn-primary btn-block" data-act="upgrade">Start Premium</button>')+
+        '</section>'+
+      '</div>'+
+      '<p class="fine">Premium checks send only what\u2019s needed, with personal details removed.</p>'+
+    '</div>';
+  }
+
+  var VIEWS = { plans:vPlans, home:vHome, check:vCheck, qr:vQr, checking:vChecking, result:vResult, connected:vConnected, history:vHistory, admin:vAdmin, demo:vDemo };
+
+  /* ---------- overlays ---------- */
+  function overlayHtml(){
+    if (!S.onboarded){
+      var slides = [
+        [P.shieldEye,'Check anything that looks suspicious','Texts, emails, links, QR codes and phone numbers.'],
+        [P.chat,'We watch over your messages','A small PhishEye button appears next to messages. Red means danger.'],
+        [P.lock,'A family member can help','Settings are protected with a PIN. Dangerous threats are always blocked.']
+      ];
+      var s = slides[S.ob];
+      return '<div class="scrim center-it"><div class="ob" role="dialog" aria-modal="true" aria-labelledby="ob-title">'+
+        '<div style="display:flex;justify-content:flex-end"><button type="button" class="btn-link" data-act="obSkip">Skip</button></div>'+
+        '<div class="ob-art">'+svg(s[0],76,1.6)+'</div>'+
+        '<h2 id="ob-title" class="h1">'+s[1]+'</h2><p class="lead" style="font-size:20px">'+s[2]+'</p>'+
+        '<div class="ob-dots">'+[0,1,2].map(function(i){ return '<span'+(i===S.ob?' class="on"':'')+'></span>'; }).join('')+'</div>'+
+        '<button type="button" class="btn btn-primary btn-block" data-act="obNext" data-autofocus>'+(S.ob===2?'Get started':'Next')+'</button>'+
+      '</div></div>';
+    }
+    if (S.popup){
+      return '<div class="scrim center-it"><div class="popup" role="alertdialog" aria-modal="true" aria-labelledby="pp-title" aria-describedby="pp-body">'+
+        '<div class="popup-head">'+svg(P.oct,58)+'<div class="big" id="pp-title">Stop!</div><div class="sub">This website is dangerous</div></div>'+
+        '<div class="popup-body"><p id="pp-body">PhishEye blocked <b>northbank-secure.co</b>. It is a fake bank website that tries to steal your password.</p>'+
+          (S.protection==='paused' ? '<p class="note-warn">Protection is paused, but dangerous threats are always blocked.</p>' : '')+
+          '<button type="button" class="btn btn-primary btn-block" data-act="closePopup" data-autofocus>Go back to safety</button>'+
+          '<button type="button" class="btn btn-secondary btn-block" data-act="callFamily">Call my trusted contact</button>'+
+          (S.admin.openAnyway ? '<button type="button" class="btn-link" data-act="openAnyway">Open anyway (not safe)</button>' : '')+
+        '</div></div></div>';
+    }
+    if (S.sheet){
+      var d = {
+        scam:{ lv:'high', lab:'High Risk', t:'This is a fake bank message', b:'The link goes to a fake Northbank website. Don\u2019t tap it and don\u2019t reply.', p:'Delete and block' },
+        draftRisky:{ lv:'suspicious', lab:'Warning', t:'Don\u2019t send a code', b:'Your bank will never ask for a code by text. Anyone who asks is likely a scammer.', p:'Delete my message' },
+        needPremium:{ lv:'suspicious', lab:'Premium', t:'Reading screenshots is part of Premium', b:'On the Free plan, paste the text of the message instead. Or remove the file and check the text.', p:'See plans' },
+        upgrade:{ lv:'safe', lab:'Premium', t:'Start Premium for $10 a month?', b:'Demo only: no payment is taken. In the real app, payment would happen here.', p:'Start Premium' },
+        draftSafe:{ lv:'safe', lab:'Safe', t:'Your message looks fine', b:'We didn\u2019t find anything risky in what you\u2019re writing.', p:'OK' }
+      }[S.sheet];
+      return '<div class="scrim" data-act="closeSheetBg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-title">'+
+        '<div style="display:flex;align-items:center;gap:10px"><span class="pill '+d.lv+'">'+d.lab+'</span><span style="font-weight:700;color:var(--muted)">PhishEye</span></div>'+
+        '<h2 class="sheet-title" id="sh-title">'+d.t+'</h2><p>'+d.b+'</p>'+
+        '<button type="button" class="btn btn-primary btn-block" data-act="sheetPrimary" data-autofocus>'+d.p+'</button>'+
+        (S.sheet==='scam' ? '<button type="button" class="btn btn-secondary btn-block" data-act="seeWhy">See why</button>' : '')+
+        '<button type="button" class="btn-link" data-act="closeSheet">Close</button>'+
+      '</div></div>';
+    }
+    return '';
+  }
+  var lastFocus = null;
+  function renderOverlay(){
+    var html = overlayHtml(), ov = $('overlay'), had = ov.innerHTML !== '';
+    ov.innerHTML = html;
+    if (html && !had) lastFocus = document.activeElement;
+    if (html){ var f = ov.querySelector('[data-autofocus]'); if (f) f.focus(); }
+    else if (had && lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  }
+
+  /* ---------- render ---------- */
+  function render(routeChanged){
+    $('view').innerHTML = VIEWS[S.route]();
+    $('side-nav').innerHTML = navHtml(true);
+    $('bottom-nav').innerHTML = navHtml(false);
+    $('side-theme').innerHTML = sideTheme();
+    renderOverlay();
+    if (routeChanged){
+      window.scrollTo(0,0);
+      var h = $('view').querySelector('[data-focus]');
+      if (h && !$('overlay').innerHTML) h.focus({ preventScroll:true });
+    }
+  }
+  $('brand-slot').innerHTML = svg(P.shieldEye,32,1.8)+'<span>PhishEye</span>';
+
+  /* ---------- checking flow ---------- */
+  function runScan(r, label){
+    clearTimers();
+    S.scanStep = 0; S.route = 'checking';
+    if (location.hash !== '#/checking') { history.pushState(null,'','#/checking'); }
+    render(true);
+    [1,2,3].forEach(function(i){
+      timers.push(setTimeout(function(){
+        if (S.route !== 'checking') return;
+        if (i < 3){ S.scanStep = i; var steps = $('view').querySelector('.steps'); render(false); return; }
+        var short = label.length > 60 ? label.slice(0,60)+'\u2026' : label;
+        S.history.unshift({ label:short, sub:r.type, when:'Just now', level:r.level, explain:(r.reasons||[]).join(' ') });
+        if (r.connected) S.hasAlert = true;
+        S.result = r; save();
+        history.replaceState(null,'','#/result');
+        S.route = 'result'; S.showDetails = false; render(true);
+      }, i*800));
+    });
+  }
+
+  /* ---------- files ---------- */
+  function takeFile(file){
+    S.dropError = '';
+    if (!file) return;
+    if (file.size > 10*1024*1024){ S.dropError = 'That file is bigger than 10 MB. Try a smaller screenshot.'; render(false); return; }
+    var name = file.name || 'Screenshot';
+    var isImg = /^image\//.test(file.type);
+    var isText = /^text\//.test(file.type) || /\.(txt|eml)$/i.test(name);
+    var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(name);
+    if (!isImg && !isText && !isPdf){ S.dropError = 'We can\u2019t read that kind of file. Use a photo, PDF, or saved email.'; render(false); return; }
+    if (S.attachment && S.attachment.url) URL.revokeObjectURL(S.attachment.url);
+    S.attachment = { name:name, kind:isImg?'image':(isText?'text':'pdf'), meta:(isImg?'Photo':(isText?'Text file':'PDF'))+', '+fmtSize(file.size), url:isImg?URL.createObjectURL(file):null };
+    if (isText){
+      var rd = new FileReader();
+      rd.onload = function(){ S.input = String(rd.result).slice(0,4000); S.sampleKey = null; render(false); toast('We added the text from your file.'); };
+      rd.readAsText(file);
+    }
+    render(false);
+  }
+  $('file').addEventListener('change', function(e){ takeFile(e.target.files[0]); e.target.value=''; });
+
+  var dragDepth = 0;
+  document.addEventListener('dragenter', function(e){ var d = e.target.closest && e.target.closest('#drop'); if (!d) return; e.preventDefault(); dragDepth++; d.classList.add('is-over'); });
+  document.addEventListener('dragover', function(e){ var d = e.target.closest && e.target.closest('#drop'); e.preventDefault(); if (d) e.dataTransfer.dropEffect = 'copy'; else e.dataTransfer.dropEffect = 'none'; });
+  document.addEventListener('dragleave', function(e){ var d = e.target.closest && e.target.closest('#drop'); if (!d) return; dragDepth = Math.max(0,dragDepth-1); if (!dragDepth) d.classList.remove('is-over'); });
+  document.addEventListener('drop', function(e){
+    e.preventDefault(); dragDepth = 0;
+    var d = e.target.closest && e.target.closest('#drop');
+    if (!d) return;
+    d.classList.remove('is-over');
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) takeFile(f);
+  });
+
+  /* ---------- inputs ---------- */
+  document.addEventListener('input', function(e){
+    if (e.target.id === 'pe-input'){ S.input = e.target.value; S.sampleKey = null; var ch = document.querySelectorAll('.chip'); ch.forEach(function(c){ c.setAttribute('aria-pressed','false'); }); }
+    if (e.target.id === 'pe-draft'){ S.draft = e.target.value; $('draft-badge').innerHTML = draftBadge(); }
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){
+      if (S.sheet){ S.sheet = null; renderOverlay(); }
+      else if (S.popup){ S.popup = false; renderOverlay(); }
+    }
+    if (e.key === 'Enter' && e.target.id === 'pe-draft'){ e.preventDefault(); act.send(); }
+    if (S.route === 'admin' && !S.adminUnlocked && /^[0-9]$/.test(e.key) && !$('overlay').innerHTML){ act.key(null, e.key); }
+    if (S.route === 'admin' && !S.adminUnlocked && e.key === 'Backspace'){ act.key(null, 'del'); }
+  });
+
+  /* ---------- actions ---------- */
+  var act = {
+    nav:function(el){ go(el.dataset.to); },
+    startType:function(el){ S.type = 'message'; S.input=''; S.sampleKey=null; S.attachment=null; S.dropError=''; go('check'); },
+    tab:function(el){ S.type = el.dataset.type; S.sampleKey = null; render(false); var b = document.querySelector('.seg [data-type="'+S.type+'"]'); if (b) b.focus(); },
+    example:function(el){ var k = el.dataset.key; S.input = SAMPLES[k].input; S.sampleKey = k; render(false); var b = document.querySelector('.chip[data-key="'+k+'"]'); if (b) b.focus(); },
+    chooseFile:function(){ $('file').click(); },
+    removeAttach:function(){ if (S.attachment && S.attachment.url) URL.revokeObjectURL(S.attachment.url); S.attachment = null; render(false); var b = document.querySelector('[data-act="chooseFile"]'); if (b) b.focus(); },
+    check:function(){
+      var txt = S.input.trim(), r;
+      if (S.attachment && S.attachment.kind !== 'text' && S.plan !== 'premium'){ S.sheet = 'needPremium'; renderOverlay(); return; }
+      if (!txt && S.attachment && S.attachment.kind !== 'text'){
+        r = Object.assign({}, SAMPLES.high, { input:'Screenshot: '+S.attachment.name, type:'Screenshot' });
+        runScan(r, S.attachment.name); return;
+      }
+      if (!txt){ var t = TYPES.filter(function(x){ return x.id===S.type; })[0] || TYPES[0]; r = SAMPLES[t.ex]; txt = r.input; }
+      else r = S.sampleKey ? SAMPLES[S.sampleKey] : analyze(txt, S.type);
+      runScan(r, txt);
+    },
+    simulateScan:function(){ runScan(SAMPLES.qr, 'pay-parking-now.co/pay'); },
+    report:function(){ toast('Blocked and reported. Well done!'); },
+    callFamily:function(){ toast('Calling your trusted contact\u2026 (demo)'); },
+    toggleDetails:function(){ S.showDetails = !S.showDetails; render(false); var b = document.querySelector('[data-act="toggleDetails"]'); if (b) b.focus(); },
+    toggleShared:function(){ S.sharedHelp = !S.sharedHelp; render(false); var b = document.querySelector('[data-act="toggleShared"]'); if (b) b.focus(); },
+    key:function(el, k){
+      k = k || el.dataset.k;
+      if (k === 'del'){ S.pin = S.pin.slice(0,-1); S.pinError = false; }
+      else {
+        var next = S.pin + k;
+        if (next.length < 4){ S.pin = next; S.pinError = false; }
+        else if (next === '1234'){ S.pin=''; S.pinError=false; S.adminUnlocked = true; render(true); return; }
+        else { S.pin=''; S.pinError = true; }
+      }
+      render(false);
+      if (el){ var b = document.querySelector('.keypad [data-k="'+k+'"]'); if (b) b.focus(); }
+    },
+    lock:function(){ S.adminUnlocked = false; toast('Admin settings locked.'); go('home'); },
+    prot:function(el){ S.protection = el.dataset.v; save(); render(false); var b = document.querySelector('[data-act="prot"][data-v="'+S.protection+'"]'); if (b) b.focus(); },
+    toggle:function(el){ var id = el.dataset.id; S.admin[id] = !(S.admin[id]===true); save(); render(false); var b = document.querySelector('[data-act="toggle"][data-id="'+id+'"]'); if (b) b.focus(); },
+    retention:function(el){ S.retention = Number(el.dataset.d); save(); render(false); var b = document.querySelector('[data-act="retention"][data-d="'+S.retention+'"]'); if (b) b.focus(); },
+    deleteAll:function(){ S.history = []; S.hasAlert = false; save(); render(false); toast('History deleted.'); },
+    demoToast:function(el){ toast(el.dataset.msg); },
+    openLink:function(){ S.popup = true; S.sheet = null; renderOverlay(); },
+    openScam:function(){ S.sheet = 'scam'; renderOverlay(); },
+    openDraft:function(){ S.sheet = draftRisky() ? 'draftRisky' : 'draftSafe'; renderOverlay(); },
+    send:function(){
+      if (!S.draft.trim()) return;
+      if (draftRisky() && S.protection==='on'){ S.sheet = 'draftRisky'; renderOverlay(); return; }
+      S.draft = ''; render(false); toast('Message sent (demo).');
+    },
+    sheetPrimary:function(){
+      var sh = S.sheet; S.sheet = null;
+      if (sh === 'needPremium'){ go('plans'); }
+      else if (sh === 'upgrade'){ S.plan = 'premium'; save(); render(false); toast('Premium is on. Full protection is active.'); }
+      else if (sh === 'scam'){ S.scamDeleted = true; render(false); toast('Deleted and blocked.'); }
+      else if (sh === 'draftRisky'){ S.draft = ''; render(false); var i = $('pe-draft'); if (i) i.focus(); }
+      else renderOverlay();
+    },
+    seeWhy:function(){ S.result = SAMPLES.high; go('result'); },
+    closeSheet:function(){ S.sheet = null; renderOverlay(); },
+    closeSheetBg:function(el, k, e){ if (e.target === el){ S.sheet = null; renderOverlay(); } },
+    closePopup:function(){ S.popup = false; renderOverlay(); },
+    openAnyway:function(){ S.popup = false; renderOverlay(); toast('Opening the website (demo).'); },
+    obNext:function(){ if (S.ob < 2){ S.ob++; renderOverlay(); } else { S.onboarded = true; save(); renderOverlay(); var h = $('view').querySelector('[data-focus]'); if (h) h.focus(); } },
+    theme:function(){ var d = !isDark(); document.documentElement.setAttribute('data-theme', d?'dark':'light'); try { localStorage.setItem('phisheye-theme', d?'dark':'light'); } catch(e){} render(false); var b = document.querySelector('.theme-icon') ; if (window.matchMedia('(min-width: 881px)').matches) b = document.querySelector('#side-theme .switch'); if (b) b.focus(); },
+    upgrade:function(){ S.sheet = 'upgrade'; renderOverlay(); },
+    setFree:function(){ S.plan = 'free'; save(); render(false); toast('You\u2019re now on the Free plan.'); },
+    obSkip:function(){ S.onboarded = true; save(); renderOverlay(); }
+  };
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-act]');
+    if (!el) return;
+    var fn = act[el.dataset.act];
+    if (fn){ fn(el, null, e); }
+  });
+
+  window.addEventListener('hashchange', navigate);
+  navigate();
+})();
+</script>
+</body>
+</html>
+
+</body></html>
